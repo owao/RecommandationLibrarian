@@ -1,4 +1,4 @@
-import bookcrawler
+import book_crawler
 import extractwords
 from pprint import pprint
 
@@ -10,6 +10,6 @@ if __name__ == "__main__":
 
     top_n = int(input("몇 권을 추천받으시겠습니까?"))
 
-    all_results = bookcrawler.search_wordlist(keywords, top_n)
+    all_results = book_crawler.search_wordlist(keywords, top_n)
 
     pprint(all_results)
