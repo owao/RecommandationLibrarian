@@ -5,7 +5,6 @@ from pyrdf2vec.embedders import Word2Vec
 from pyrdf2vec.walkers import RandomWalker
 from collections import defaultdict
 
-
 # 파일에서 트리플 로드
 df = pd.read_csv("wikidata_book_subgraph_3hop.tsv", sep="\t")
 triples = [tuple(x) for x in df.to_numpy()]
