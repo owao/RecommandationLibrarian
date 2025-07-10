@@ -6,7 +6,7 @@ from pyrdf2vec.walkers import RandomWalker
 from collections import defaultdict
 
 # 파일에서 트리플 로드
-df = pd.read_csv("wikidata_book_subgraph_3hop.tsv", sep="\t")
+df = pd.read_csv("traindataset/wikidata_book_subgraph_7hop.tsv", sep="\t")
 triples = [tuple(x) for x in df.to_numpy()]
 
 # Knowledge Graph 생성
