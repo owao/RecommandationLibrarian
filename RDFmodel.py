@@ -4,9 +4,10 @@ from pyrdf2vec import RDF2VecTransformer
 from pyrdf2vec.embedders import Word2Vec
 from pyrdf2vec.walkers import RandomWalker
 from collections import defaultdict
+import os
 
 # 파일에서 트리플 로드
-df = pd.read_csv("traindataset/wikidata_book_subgraph_7hop.tsv", sep="\t")
+df = pd.read_csv("traindataset/wikidata_book_subgraph_10hop.tsv", sep="\t")
 triples = [tuple(x) for x in df.to_numpy()]
 
 # Knowledge Graph 생성
@@ -34,12 +35,34 @@ for s, p, o in triples:
 print(f"평균 연결 수: {sum(connections.values()) / len(connections):.2f}")
 
 
+from tqdm import tqdm
+
 if __name__ == "__main__":
     print("📚 RDF2Vec 임베딩 학습 중...")
-    embeddings = rdf2vec.fit_transform(graph, entities)
+
+    # 전체 walk 생성을 tqdm으로 감싸 진행률 표시
+    walks = []
+    for entity in tqdm(entities, desc="🔍 Walk 생성 중", unit="entity"):
+        entity_walks = rdf2vec.get_walks(graph, [entity])
+        walks.extend(entity_walks)
+
+    print("✅ Walk 생성 완료! RDF2Vec 학습 중...")
+
+    # Word2Vec 임베딩 학습
+    rdf2vec.fit(walks)
+
+    # 최종 임베딩 추출
+    embeddings = rdf2vec.transform(graph, entities)
+
     print("✅ 임베딩 완료!")
-
     print("총 임베딩 수:", len(embeddings))
-    print("하나당 벡터 차원:", len(embeddings[0]))
-    
+    if embeddings:
+        print("하나당 벡터 차원:", len(embeddings[0]))
 
+    # 🔹 모델 저장
+    output_path = "model/rdf2vec_10hop.model"
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    rdf2vec.embedder._model.save(output_path)
+    print(f"💾 모델 저장 완료: {output_path}")
+
+    print("📚 RDF2Vec에 학습된 단어 수:", len(rdf2vec.embedder._model.wv))

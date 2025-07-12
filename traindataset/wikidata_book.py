@@ -1,18 +1,22 @@
 from SPARQLWrapper import SPARQLWrapper, JSON
 import pandas as pd
 import time
+from tqdm import tqdm  # ✅ tqdm 추가
+
+N = int(input("k-hop의 단계 수를 입력하세요"))
+#THEME = input("중심 주제어를 입력하세요")
 
 # SPARQL 설정
-sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
+sparql = SPARQLWrapper("https://query.wikidata.org/sparql") 
 sparql.setReturnFormat(JSON)
 sparql.setTimeout(60)
 
 # 시작 엔티티: 책 (Q571)
 start_entity = "http://www.wikidata.org/entity/Q571"
+print(start_entity)
 visited = set()
 triples = []
 
-# 의미 있는 predicate만 필터링 (장르, 주제, 상위 개념, 인스턴스, 구성 요소 등)
 def get_one_hop(entity):
     query = f"""
     PREFIX wdt: <http://www.wikidata.org/prop/direct/>
@@ -28,7 +32,7 @@ def get_one_hop(entity):
         ))
         FILTER isIRI(?o)
     }}
-    LIMIT 30
+    LIMIT 50
     """
     sparql.setQuery(query)
     try:
@@ -40,10 +44,10 @@ def get_one_hop(entity):
 
 # hop-by-hop 탐색
 frontier = [start_entity]
-for hop in range(3):
+for hop in range(N):
     print(f"🚀 Hop {hop + 1} 시작")
     next_frontier = []
-    for entity in frontier:
+    for entity in tqdm(frontier, desc=f"➡️ Hop {hop + 1} 진행 중", unit="entity"):
         if entity in visited:
             continue
         visited.add(entity)
@@ -52,10 +56,10 @@ for hop in range(3):
         for (_, _, obj) in edges:
             if obj not in visited:
                 next_frontier.append(obj)
-        time.sleep(3)  # 서버 과부하 방지
+        time.sleep(2)
     frontier = next_frontier
 
 # 결과 저장
 df = pd.DataFrame(triples, columns=["subject", "predicate", "object"])
-df.to_csv("traindataset/wikidata_book_subgraph_3hop.tsv", sep="\t", index=False)
-print("✅ 3-hop 서브그래프 저장 완료")
+df.to_csv(f"traindataset/wikidata_book_subgraph_{N}hop.tsv", sep="\t", index=False)
+print(f"✅ {N}-hop 서브그래프 저장 완료")
